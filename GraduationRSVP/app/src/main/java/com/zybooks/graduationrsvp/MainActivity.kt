@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -54,63 +55,98 @@ class MainActivity : ComponentActivity() {
    
 @Composable
 fun GradScreen(modifier: Modifier = Modifier) {
-    Image(
-        painter = painterResource(R.drawable.grad_cap),
-        contentDescription = "Graduation cap",
-        alpha = 0.3f,
-        modifier = modifier
-    )
-    Text(
-        text = stringResource(R.string.graduation_announcement),
-        fontSize = 50.sp,
-        lineHeight = 50.sp,
-        fontWeight = FontWeight.Bold,
-        color = Color.Red,
-        textAlign = TextAlign.Center,
-        modifier = modifier
-            .offset(y = 70.dp)
-    )
-    var checked by remember { mutableStateOf(false) }
-    Row(
-        modifier = Modifier
-            .offset(x = 20.dp ,y = 650.dp),
-    ){
-        Row(verticalAlignment = Alignment.CenterVertically){
+    Column(
+        modifier = modifier.fillMaxHeight(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Text(
+            text = stringResource(R.string.graduation_announcement),
+            fontSize = 50.sp,
+            color = Color.Red,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Bold,
+            lineHeight = 50.sp,
+            modifier = modifier
+        )
+        Image(
+            painter = painterResource(R.drawable.grad_cap),
+            contentDescription = null,
+            alpha = 0.3F
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Filled.Info,
-                contentDescription = "Event Icon",
+                contentDescription = "Information",
                 tint = Color.Gray,
-                modifier = modifier
-                    .size(50.dp)
+                modifier = Modifier.padding(10.dp).size(40.dp)
             )
             Text(
                 text = "May 14 - Ganus Hall - 2:00 pm",
-                fontSize = 22.sp,
-                color = Color.Black,
-                textAlign = TextAlign.Center,
-                modifier = modifier
+                fontSize = 20.sp
             )
         }
-
-    }
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .offset(y = 750.dp)
-    ){
-        Switch(
-            checked = checked,
-            onCheckedChange = { checked = it },
-            modifier = modifier
-        )
-        Text(
-            text = if (checked) "I'll be there!" else "Sorry I can't be there.",
-            fontSize = 35.sp,
-            textAlign = TextAlign.Center,
-            modifier = modifier
-        )
     }
 }
+
+//fun GradScreen(modifier: Modifier = Modifier) {
+//    Image(
+//        painter = painterResource(R.drawable.grad_cap),
+//        contentDescription = "Graduation cap",
+//        alpha = 0.3f,
+//        modifier = modifier
+//    )
+//    Text(
+//        text = stringResource(R.string.graduation_announcement),
+//        fontSize = 50.sp,
+//        lineHeight = 50.sp,
+//        fontWeight = FontWeight.Bold,
+//        color = Color.Red,
+//        textAlign = TextAlign.Center,
+//        modifier = modifier
+//            .offset(y = 70.dp)
+//    )
+//    var checked by remember { mutableStateOf(false) }
+//    Row(
+//        modifier = Modifier
+//            .offset(x = 20.dp ,y = 650.dp),
+//    ){
+//        Row(verticalAlignment = Alignment.CenterVertically){
+//            Icon(
+//                imageVector = Icons.Filled.Info,
+//                contentDescription = "Event Icon",
+//                tint = Color.Gray,
+//                modifier = modifier
+//                    .size(50.dp)
+//            )
+//            Text(
+//                text = "May 14 - Ganus Hall - 2:00 pm",
+//                fontSize = 22.sp,
+//                color = Color.Black,
+//                textAlign = TextAlign.Center,
+//                modifier = modifier
+//            )
+//        }
+//
+//    }
+//    Column(
+//        horizontalAlignment = Alignment.CenterHorizontally,
+//        modifier = Modifier
+//            .offset(y = 750.dp)
+//    ){
+//        Switch(
+//            checked = checked,
+//            onCheckedChange = { checked = it },
+//            modifier = modifier
+//        )
+//        Text(
+//            text = if (checked) "I'll be there!" else "Sorry I can't be there.",
+//            fontSize = 35.sp,
+//            textAlign = TextAlign.Center,
+//            modifier = modifier
+//        )
+//    }
+//}
 
 @Preview(showBackground = true)
 @Composable

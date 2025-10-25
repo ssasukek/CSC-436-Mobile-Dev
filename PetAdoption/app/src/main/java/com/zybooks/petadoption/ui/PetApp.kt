@@ -1,14 +1,19 @@
 package com.zybooks.petadoption.ui
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridItemScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -42,55 +47,104 @@ import kotlinx.serialization.Serializable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.toRoute
 
 sealed class Routes {
-   @Serializable
-   data object List
+   @Serializable data object Home
+   @Serializable data object Messages
+   @Serializable data object Favorites
 
-   @Serializable
-   data object Detail
+   // Pet Adoption app destinations
+   @Serializable data object List
+   @Serializable data class Detail(val petId: Int)
+   @Serializable data class Adopt(val petId: Int)
+}
 
-   @Serializable
-   data object Adopt
+enum class AppScreen(val route: Any, val title: String, val icon: ImageVector) {
+   HOME(Routes.Home, "Home", Icons.Default.Home),
+   MESSAGES(Routes.Messages, "Messages", Icons.Default.Email),
+   FAVORITES(Routes.Favorites, "Favorites", Icons.Default.Favorite)
 }
 
 @Composable
-fun PetApp(
-   petViewModel: PetViewModel = viewModel()
-) {
+fun BottomNavBar(navController: NavController) {
+   val backStackEntry by navController.currentBackStackEntryAsState()
+   val currentRoute = backStackEntry?.destination?.route
+
+   NavigationBar {
+      AppScreen.entries.forEach { item ->
+         NavigationBarItem(
+            selected = currentRoute?.endsWith(item.route.toString()) == true,
+            onClick = {
+               navController.navigate(item.route) {
+                  popUpTo(navController.graph.startDestinationId)
+               }
+            },
+            icon = { Icon(item.icon, contentDescription = item.title) },
+            label = { Text(item.title) }
+         )
+      }
+   }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PetApp() {
    val navController = rememberNavController()
 
-   NavHost(
-      navController = navController,
-      startDestination = Routes.List
-   ) {
-      composable<Routes.List> {
-         ListScreen(
-            petList = petViewModel.petList,
-            onImageClick = { pet ->
-               petViewModel.selectedPet = pet
-               navController.navigate(Routes.Detail)
-            }
-         )
-      }
-      composable<Routes.Detail> {
-         DetailScreen(
-            pet = petViewModel.selectedPet,
-            onAdoptClick = {
-               navController.navigate(Routes.Adopt)
-            },
-            onUpClick = {
-               navController.navigateUp()
-            }
-         )
-      }
-      composable<Routes.Adopt> {
-         AdoptScreen(
-            pet = petViewModel.selectedPet,
-            onUpClick = {
-               navController.navigateUp()
-            }
-         )
+   Scaffold(
+      topBar = { PetAppBar(title = "Pet Adoption") },
+      bottomBar = { BottomNavBar(navController) }
+   ) { innerPadding ->
+      NavHost(
+         navController = navController,
+         startDestination = Routes.Home,
+         modifier = Modifier.padding(innerPadding)
+      ) {
+         // Bottom navigation routes
+         composable<Routes.Home> {
+            val listViewModel: ListViewModel = viewModel()
+            ListScreen(
+               petList = listViewModel.petList,
+               onImageClick = { pet ->
+                  navController.navigate(Routes.Detail(pet.id))
+               }
+            )
+         }
+         composable<Routes.Messages> {
+            Text("Messages", modifier = Modifier.padding(16.dp))
+         }
+         composable<Routes.Favorites> {
+            Text("Favorites", modifier = Modifier.padding(16.dp))
+         }
+
+         // Detail & Adopt
+         composable<Routes.Detail> { backstackEntry ->
+            val details: Routes.Detail = backstackEntry.toRoute()
+            DetailScreen(
+               petId = details.petId,
+               onAdoptClick = { navController.navigate(Routes.Adopt(details.petId)) },
+               onUpClick = { navController.navigateUp() }
+            )
+         }
+         composable<Routes.Adopt> { backstackEntry ->
+            val adopt: Routes.Adopt = backstackEntry.toRoute()
+            AdoptScreen(
+               petId = adopt.petId,
+               onUpClick = { navController.navigateUp() }
+            )
+         }
       }
    }
 }
@@ -123,7 +177,8 @@ fun PetAppBar(
 fun ListScreen(
    petList: List<Pet>,
    onImageClick: (Pet) -> Unit,
-   modifier: Modifier = Modifier
+   modifier: Modifier = Modifier,
+   viewModel: ListViewModel = viewModel()
 ) {
    Scaffold(
       topBar = {
@@ -137,7 +192,7 @@ fun ListScreen(
          contentPadding = PaddingValues(0.dp),
          modifier = modifier.padding(innerPadding)
       ) {
-         items(petList) { pet ->
+         items(viewModel.petList) { pet ->
             Image(
                painter = painterResource(id = pet.imageId),
                contentDescription = "${pet.type} ${pet.gender}",
@@ -150,13 +205,14 @@ fun ListScreen(
       }
    }
 }
-private fun LazyGridItemScope.onImageClick(p1: Int) {}
-@Preview
+
+@Preview(showBackground = true)
 @Composable
 fun PreviewListScreen() {
    PetAdoptionTheme {
+      val dummyPets = PetDataSource().loadPets()
       ListScreen(
-         petList = PetDataSource().loadPets(),
+         petList = dummyPets,
          onImageClick = { }
       )
    }
@@ -164,11 +220,13 @@ fun PreviewListScreen() {
 
 @Composable
 fun DetailScreen(
-   pet: Pet,
+   petId: Int,
    onAdoptClick: () -> Unit,
    modifier: Modifier = Modifier,
+   viewModel: DetailViewModel = viewModel(),
    onUpClick: () -> Unit = { }
 ) {
+   val pet = viewModel.getPet(petId)
    val gender = if (pet.gender == PetGender.MALE) "Male" else "Female"
 
    Scaffold(
@@ -227,7 +285,7 @@ fun PreviewDetailScreen() {
    val pet = PetDataSource().loadPets()[0]
    PetAdoptionTheme {
       DetailScreen(
-         pet = pet,
+         petId = pet.id,
          onAdoptClick = { }
       )
    }
@@ -235,10 +293,14 @@ fun PreviewDetailScreen() {
 
 @Composable
 fun AdoptScreen(
-   pet: Pet,
+   petId: Int,
    modifier: Modifier = Modifier,
+   viewModel: AdoptViewModel = viewModel(),
    onUpClick: () -> Unit = { }
 ) {
+   val pet = viewModel.getPet(petId)
+   val context = LocalContext.current
+   
    Scaffold(
       topBar = {
          PetAppBar(
@@ -269,7 +331,7 @@ fun AdoptScreen(
             modifier = modifier.padding(6.dp),
          )
          Button(
-            onClick = { },
+            onClick = { shareAdoption(context, pet) },
             modifier = modifier.padding(6.dp)
          ) {
             Icon(Icons.Default.Share, null)
@@ -284,6 +346,96 @@ fun AdoptScreen(
 fun PreviewAdoptScreen() {
    val pet = PetDataSource().loadPets()[0]
    PetAdoptionTheme {
-      AdoptScreen(pet)
+      AdoptScreen(pet.id)
    }
+}
+
+fun dialNumber(context: Context) {
+   // URI uses the "tel" scheme
+   val phoneNumUri = Uri.parse("tel:111-222-3333")
+   val intent = Intent(Intent.ACTION_DIAL, phoneNumUri)
+   context.startActivity(intent)
+}
+
+fun shareAdoption(context: Context, pet: Pet) {
+   val intent = Intent(Intent.ACTION_SEND).apply {
+      type = "text/plain"
+      putExtra(Intent.EXTRA_SUBJECT, "Meet ${pet.name}!")
+      putExtra(Intent.EXTRA_TEXT, "I've adopted ${pet.name}!")
+   }
+
+   context.startActivity(
+      Intent.createChooser(intent, "Pet Adoption")
+   )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BottomNavBarDemoApp(
+   modifier: Modifier = Modifier
+) {
+   val navController = rememberNavController()
+
+   Scaffold(
+      topBar = {
+         TopAppBar(
+            title = { Text("Bottom Nav Bar Demo") }
+         )
+      },
+      bottomBar = {
+         BottomNavBar(navController)
+      }
+   ) { innerPadding ->
+      NavHost(
+         navController = navController,
+         startDestination = Routes.Home,
+         modifier = modifier.padding(innerPadding)
+      ) {
+         composable<Routes.Home> {
+            Home()
+         }
+         composable<Routes.Messages> {
+            Messages()
+         }
+         composable<Routes.Favorites> {
+            Favorites()
+         }
+      }
+   }
+}
+
+@Composable
+fun Home() {
+   Text(
+      AppScreen.HOME.title,
+      textAlign = TextAlign.Center,
+      fontSize = 80.sp,
+      modifier = Modifier
+         .fillMaxSize()
+         .wrapContentHeight(),
+   )
+}
+
+@Composable
+fun Messages() {
+   Text(
+      AppScreen.MESSAGES.title,
+      textAlign = TextAlign.Center,
+      fontSize = 80.sp,
+      modifier = Modifier
+         .fillMaxSize()
+         .wrapContentHeight(),
+   )
+}
+
+@Composable
+fun Favorites() {
+   Text(
+      AppScreen.FAVORITES.title,
+      textAlign = TextAlign.Center,
+      fontSize = 80.sp,
+      modifier = Modifier
+         .fillMaxSize()
+         .wrapContentHeight(),
+   )
 }

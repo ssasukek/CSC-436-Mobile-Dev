@@ -6,12 +6,12 @@ plugins {
 
 android {
    namespace = "com.zybooks.petadoption"
-   compileSdk = 35
+   compileSdk = 34
 
    defaultConfig {
       applicationId = "com.zybooks.petadoption"
       minSdk = 24
-      targetSdk = 35
+      targetSdk = 34
       versionCode = 1
       versionName = "1.0"
 
@@ -53,30 +53,20 @@ android {
 dependencies {
    implementation(libs.androidx.navigation.compose)
    implementation(libs.kotlinx.serialization.json)
-
    implementation(libs.androidx.lifecycle.viewmodel.compose)
    implementation(libs.androidx.core.ktx)
-
    implementation(libs.androidx.lifecycle.runtime.ktx)
    implementation(libs.androidx.activity.compose)
-
    implementation(platform(libs.androidx.compose.bom))
-
    implementation(libs.androidx.ui)
    implementation(libs.androidx.ui.graphics)
    implementation(libs.androidx.ui.tooling.preview)
-
    implementation(libs.androidx.material3)
-
-   implementation("androidx.compose.material:material-icons-extended:1.7.4")
-   implementation(libs.androidx.compose.ui)
-
    testImplementation(libs.junit)
    androidTestImplementation(libs.androidx.junit)
    androidTestImplementation(libs.androidx.espresso.core)
    androidTestImplementation(platform(libs.androidx.compose.bom))
    androidTestImplementation(libs.androidx.ui.test.junit4)
-   
    debugImplementation(libs.androidx.ui.tooling)
    debugImplementation(libs.androidx.ui.test.manifest)
 }
